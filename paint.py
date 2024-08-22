@@ -15,6 +15,7 @@ class PaintApp:
         self.mode = "brush"
         self.grid_size = 20
         self.snap_to_grid = False
+        self.custom_shape_points = []
         self.start_x = None
         self.start_y = None
         self.shapes = []
@@ -32,6 +33,7 @@ class PaintApp:
         self.create_font_options()
         self.create_grid_toggle_button()
         self.create_snap_to_grid_button()
+        self.create_custom_shape_button()
         self.setup_bindings()
 
     def create_color_palette(self):
@@ -82,6 +84,9 @@ class PaintApp:
 
     def create_snap_to_grid_button(self):
         Button(self.root, text="Snap to Grid", command=self.toggle_snap_to_grid).pack(side="left")
+
+    def create_custom_shape_button(self):
+        Button(self.root, text="Custom Shape", command=lambda: self.set_mode("custom_shape")).pack(side="left")
 
     def set_mode(self, mode):
         self.mode = mode
@@ -136,8 +141,10 @@ class PaintApp:
             self.redo_shapes.clear()
 
     def on_button_press(self, event):
-        if self.mode in ["line", "rectangle", "oval", "text"]:
+        if self.mode in ["line", "rectangle", "oval", "text", "custom_shape"]:
             self.start_x, self.start_y = self.snap(event.x, event.y)
+            if self.mode == "custom_shape":
+                self.custom_shape_points.append((self.start_x, self.start_y))
 
     def on_button_release(self, event):
         x, y = self.snap(event.x, event.y)
@@ -158,6 +165,13 @@ class PaintApp:
             shape_id = self.canvas.create_text(self.start_x, self.start_y, text="Text", font=text_font, fill=self.current_color)
             self.shapes.append(shape_id)
             self.redo_shapes.clear()
+        elif self.mode == "custom_shape":
+            self.custom_shape_points.append((x, y))
+            if len(self.custom_shape_points) > 2:
+                shape_id = self.canvas.create_polygon(self.custom_shape_points, outline=self.border_color, fill=self.current_color)
+                self.shapes.append(shape_id)
+                self.redo_shapes.clear()
+                self.custom_shape_points.clear()
 
     def snap(self, x, y):
         if self.snap_to_grid:
