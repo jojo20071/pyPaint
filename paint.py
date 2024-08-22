@@ -9,6 +9,7 @@ class PaintApp:
         self.canvas.pack()
         self.current_color = "black"
         self.brush_size = 2
+        self.border_color = "black"
         self.mode = "brush"
         self.start_x = None
         self.start_y = None
@@ -22,12 +23,19 @@ class PaintApp:
         self.create_eraser_button()
         self.create_undo_button()
         self.create_redo_button()
+        self.create_fill_tool_button()
+        self.create_border_color_palette()
         self.setup_bindings()
 
     def create_color_palette(self):
         colors = ["black", "red", "green", "blue", "yellow", "purple"]
         for i, color in enumerate(colors):
             Button(self.root, bg=color, width=2, command=lambda c=color: self.set_color(c)).pack(side="left")
+
+    def create_border_color_palette(self):
+        colors = ["black", "red", "green", "blue", "yellow", "purple"]
+        for i, color in enumerate(colors):
+            Button(self.root, text=f"Border: {color}", command=lambda c=color: self.set_border_color(c)).pack(side="left")
 
     def create_brush_size_slider(self):
         self.brush_slider = Scale(self.root, from_=1, to=10, orient=HORIZONTAL, command=self.set_brush_size)
@@ -54,6 +62,9 @@ class PaintApp:
     def create_redo_button(self):
         Button(self.root, text="Redo", command=self.redo).pack(side="left")
 
+    def create_fill_tool_button(self):
+        Button(self.root, text="Fill", command=lambda: self.set_mode("fill")).pack(side="left")
+
     def set_mode(self, mode):
         self.mode = mode
 
@@ -72,6 +83,9 @@ class PaintApp:
 
     def set_color(self, color):
         self.current_color = color
+
+    def set_border_color(self, color):
+        self.border_color = color
 
     def set_brush_size(self, size):
         self.brush_size = int(size)
@@ -106,13 +120,15 @@ class PaintApp:
             self.shapes.append(shape_id)
             self.redo_shapes.clear()
         elif self.mode == "rectangle":
-            shape_id = self.canvas.create_rectangle(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
+            shape_id = self.canvas.create_rectangle(self.start_x, self.start_y, event.x, event.y, outline=self.border_color, width=self.brush_size, fill=self.current_color)
             self.shapes.append(shape_id)
             self.redo_shapes.clear()
         elif self.mode == "oval":
-            shape_id = self.canvas.create_oval(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
+            shape_id = self.canvas.create_oval(self.start_x, self.start_y, event.x, event.y, outline=self.border_color, width=self.brush_size, fill=self.current_color)
             self.shapes.append(shape_id)
             self.redo_shapes.clear()
+        elif self.mode == "fill":
+            self.canvas.create_rectangle(0, 0, self.canvas.winfo_width(), self.canvas.winfo_height(), outline=self.border_color, fill=self.current_color)
 
     def undo(self):
         if self.shapes:
