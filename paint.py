@@ -12,12 +12,16 @@ class PaintApp:
         self.mode = "brush"
         self.start_x = None
         self.start_y = None
+        self.shapes = []
+        self.redo_shapes = []
         self.create_color_palette()
         self.create_brush_size_slider()
         self.create_clear_button()
         self.create_save_button()
         self.create_shape_buttons()
         self.create_eraser_button()
+        self.create_undo_button()
+        self.create_redo_button()
         self.setup_bindings()
 
     def create_color_palette(self):
@@ -44,11 +48,19 @@ class PaintApp:
     def create_eraser_button(self):
         Button(self.root, text="Eraser", command=lambda: self.set_mode("eraser")).pack(side="left")
 
+    def create_undo_button(self):
+        Button(self.root, text="Undo", command=self.undo).pack(side="left")
+
+    def create_redo_button(self):
+        Button(self.root, text="Redo", command=self.redo).pack(side="left")
+
     def set_mode(self, mode):
         self.mode = mode
 
     def clear_canvas(self):
         self.canvas.delete("all")
+        self.shapes.clear()
+        self.redo_shapes.clear()
 
     def save_canvas(self):
         file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
@@ -73,11 +85,15 @@ class PaintApp:
         if self.mode == "brush":
             x1, y1 = (event.x - 1), (event.y - 1)
             x2, y2 = (event.x + 1), (event.y + 1)
-            self.canvas.create_oval(x1, y1, x2, y2, fill=self.current_color, width=self.brush_size)
+            shape_id = self.canvas.create_oval(x1, y1, x2, y2, fill=self.current_color, width=self.brush_size)
+            self.shapes.append(shape_id)
+            self.redo_shapes.clear()
         elif self.mode == "eraser":
             x1, y1 = (event.x - 1), (event.y - 1)
             x2, y2 = (event.x + 1), (event.y + 1)
-            self.canvas.create_oval(x1, y1, x2, y2, fill="white", width=self.brush_size)
+            shape_id = self.canvas.create_oval(x1, y1, x2, y2, fill="white", width=self.brush_size)
+            self.shapes.append(shape_id)
+            self.redo_shapes.clear()
 
     def on_button_press(self, event):
         if self.mode in ["line", "rectangle", "oval"]:
@@ -86,11 +102,29 @@ class PaintApp:
 
     def on_button_release(self, event):
         if self.mode == "line":
-            self.canvas.create_line(self.start_x, self.start_y, event.x, event.y, fill=self.current_color, width=self.brush_size)
+            shape_id = self.canvas.create_line(self.start_x, self.start_y, event.x, event.y, fill=self.current_color, width=self.brush_size)
+            self.shapes.append(shape_id)
+            self.redo_shapes.clear()
         elif self.mode == "rectangle":
-            self.canvas.create_rectangle(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
+            shape_id = self.canvas.create_rectangle(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
+            self.shapes.append(shape_id)
+            self.redo_shapes.clear()
         elif self.mode == "oval":
-            self.canvas.create_oval(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
+            shape_id = self.canvas.create_oval(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
+            self.shapes.append(shape_id)
+            self.redo_shapes.clear()
+
+    def undo(self):
+        if self.shapes:
+            shape_id = self.shapes.pop()
+            self.redo_shapes.append(shape_id)
+            self.canvas.delete(shape_id)
+
+    def redo(self):
+        if self.redo_shapes:
+            shape_id = self.redo_shapes.pop()
+            self.canvas.itemconfig(shape_id, state="normal")
+            self.shapes.append(shape_id)
 
 if __name__ == "__main__":
     root = tk.Tk()
