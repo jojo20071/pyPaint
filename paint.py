@@ -25,24 +25,102 @@ class PaintApp:
         self.create_ui()
         self.setup_bindings()
 
-    def create_ui(self):
-        toolbar = Frame(self.root, padx=5, pady=5)
-        toolbar.pack(side=tk.TOP, fill=tk.X)
+def create_ui(self):
+    toolbar = Frame(self.root, padx=5, pady=5)
+    toolbar.pack(side=tk.TOP, fill=tk.X)
 
-        self.create_color_palette(toolbar)
-        self.create_brush_size_slider(toolbar)
-        self.create_clear_button(toolbar)
-        self.create_save_button(toolbar)
-        self.create_shape_buttons(toolbar)
-        self.create_eraser_button(toolbar)
-        self.create_undo_button(toolbar)
-        self.create_redo_button(toolbar)
-        self.create_fill_tool_button(toolbar)
-        self.create_text_tool_button(toolbar)
-        self.create_font_options(toolbar)
-        self.create_grid_toggle_button(toolbar)
-        self.create_snap_to_grid_button(toolbar)
-        self.create_custom_shape_button(toolbar)
+    self.create_color_palette(toolbar)
+    self.create_brush_size_slider(toolbar)
+    self.create_clear_button(toolbar)
+    self.create_save_button(toolbar)
+    self.create_shape_buttons(toolbar)
+    self.create_eraser_button(toolbar)
+    self.create_undo_button(toolbar)
+    self.create_redo_button(toolbar)
+    self.create_fill_tool_button(toolbar)
+    self.create_text_tool_button(toolbar)
+    self.create_font_options(toolbar)
+    self.create_grid_toggle_button(toolbar)
+    self.create_snap_to_grid_button(toolbar)
+    self.create_custom_shape_button(toolbar)
+    self.create_delete_button(toolbar)
+    self.create_copy_button(toolbar)
+    self.create_paste_button(toolbar)
+    self.create_rotate_button(toolbar)
+    self.create_resize_button(toolbar)
+    self.create_move_button(toolbar)
+
+def setup_bindings(self):
+    self.canvas.bind("<B1-Motion>", self.paint)
+    self.canvas.bind("<ButtonPress-1>", self.on_button_press)
+    self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+    self.canvas.bind("<Button-3>", self.select_shape)  # Right-click to select shape
+    self.root.bind("<Control-z>", lambda event: self.undo())
+    self.root.bind("<Control-y>", lambda event: self.redo())
+
+def create_delete_button(self, parent):
+    Button(parent, text="Delete", command=self.delete).pack(side="left")
+
+def create_copy_button(self, parent):
+    Button(parent, text="Copy", command=self.copy).pack(side="left")
+
+def create_paste_button(self, parent):
+    Button(parent, text="Paste", command=self.paste).pack(side="left")
+
+def create_rotate_button(self, parent):
+    Button(parent, text="Rotate", command=self.rotate).pack(side="left")
+
+def create_resize_button(self, parent):
+    Button(parent, text="Resize", command=self.resize).pack(side="left")
+
+def create_move_button(self, parent):
+    Button(parent, text="Move", command=self.move).pack(side="left")
+
+def delete(self):
+    if self.selected_shape:
+        self.canvas.delete(self.selected_shape)
+        self.shapes.remove(self.selected_shape)
+        self.selected_shape = None
+
+def select_shape(self, event):
+    self.selected_shape = self.canvas.find_closest(event.x, event.y)[0]
+
+def copy(self):
+    if self.selected_shape:
+        self.copied_shape = self.selected_shape
+
+def paste(self):
+    if self.copied_shape:
+        coords = self.canvas.coords(self.copied_shape)
+        new_shape = self.canvas.create_polygon(coords, outline=self.border_color, fill=self.current_color)
+        self.shapes.append(new_shape)
+
+def rotate(self):
+    if self.selected_shape:
+        coords = self.canvas.coords(self.selected_shape)
+        center_x = sum(coords[::2]) / len(coords[::2])
+        center_y = sum(coords[1::2]) / len(coords[1::2])
+        new_coords = []
+        for x, y in zip(coords[::2], coords[1::2]):
+            new_x = center_x + (y - center_y)
+            new_y = center_y - (x - center_x)
+            new_coords.extend([new_x, new_y])
+        self.canvas.coords(self.selected_shape, *new_coords)
+
+def resize(self):
+    if self.selected_shape:
+        coords = self.canvas.coords(self.selected_shape)
+        new_coords = [coord * 1.1 for coord in coords]
+        self.canvas.coords(self.selected_shape, *new_coords)
+
+def move(self):
+    if self.selected_shape:
+        self.canvas.bind("<B1-Motion>", self.drag_shape)
+
+def drag_shape(self, event):
+    if self.selected_shape:
+        self.canvas.move(self.selected_shape, event.x - self.start_x, event.y - self.start_y)
+        self.start_x, self.start_y = event.x, event.y
 
     def create_color_palette(self, parent):
         colors = ["black", "red", "green", "blue", "yellow", "purple"]
@@ -187,6 +265,7 @@ class PaintApp:
         if self.snap_to_grid:
             return (x // self.grid_size) * self.grid_size, (y // self.grid_size) * self.grid_size
         return x, y
+    
 
     def toggle_grid(self):
         if self.grid_size > 0:
@@ -216,6 +295,7 @@ class PaintApp:
             shape_id = self.redo_shapes.pop()
             self.canvas.itemconfig(shape_id, state="normal")
             self.shapes.append(shape_id)
+            
 
 if __name__ == "__main__":
     root = tk.Tk()
