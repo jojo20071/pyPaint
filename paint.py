@@ -17,6 +17,7 @@ class PaintApp:
         self.create_clear_button()
         self.create_save_button()
         self.create_shape_buttons()
+        self.create_eraser_button()
         self.setup_bindings()
 
     def create_color_palette(self):
@@ -38,6 +39,10 @@ class PaintApp:
         Button(self.root, text="Brush", command=lambda: self.set_mode("brush")).pack(side="left")
         Button(self.root, text="Line", command=lambda: self.set_mode("line")).pack(side="left")
         Button(self.root, text="Rectangle", command=lambda: self.set_mode("rectangle")).pack(side="left")
+        Button(self.root, text="Oval", command=lambda: self.set_mode("oval")).pack(side="left")
+
+    def create_eraser_button(self):
+        Button(self.root, text="Eraser", command=lambda: self.set_mode("eraser")).pack(side="left")
 
     def set_mode(self, mode):
         self.mode = mode
@@ -69,9 +74,13 @@ class PaintApp:
             x1, y1 = (event.x - 1), (event.y - 1)
             x2, y2 = (event.x + 1), (event.y + 1)
             self.canvas.create_oval(x1, y1, x2, y2, fill=self.current_color, width=self.brush_size)
+        elif self.mode == "eraser":
+            x1, y1 = (event.x - 1), (event.y - 1)
+            x2, y2 = (event.x + 1), (event.y + 1)
+            self.canvas.create_oval(x1, y1, x2, y2, fill="white", width=self.brush_size)
 
     def on_button_press(self, event):
-        if self.mode in ["line", "rectangle"]:
+        if self.mode in ["line", "rectangle", "oval"]:
             self.start_x = event.x
             self.start_y = event.y
 
@@ -80,6 +89,8 @@ class PaintApp:
             self.canvas.create_line(self.start_x, self.start_y, event.x, event.y, fill=self.current_color, width=self.brush_size)
         elif self.mode == "rectangle":
             self.canvas.create_rectangle(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
+        elif self.mode == "oval":
+            self.canvas.create_oval(self.start_x, self.start_y, event.x, event.y, outline=self.current_color, width=self.brush_size)
 
 if __name__ == "__main__":
     root = tk.Tk()
