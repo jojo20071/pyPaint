@@ -1,6 +1,7 @@
 # Paint App
 
 A simple paint application by Johannes Häderle using Tkinter.
+![Screenshot 2024-08-22 164926](https://github.com/user-attachments/assets/60a31bb5-dccd-47a6-b249-9b6add36f356)
 
 ## Features
 
